@@ -1,0 +1,6 @@
+{
+    "require": {
+        "mongodb/mongodb": "^1.2",
+        "hellofresh/stats-php": "^1.1"
+    }
+}

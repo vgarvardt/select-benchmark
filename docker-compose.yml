@@ -1,0 +1,31 @@
+version: '3'
+services:
+
+  postgres:
+    image: postgres:10.1-alpine
+    environment:
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+      POSTGRES_DB: benchmark
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./src/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: benchmark
+    volumes:
+      - ./src/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  mongodb:
+    image: mongo:3.6
+
+  app:
+    build: .
+    volumes:
+      - ./src/app:/app
+    links:
+      - postgres
+      - mysql
+      - mongodb

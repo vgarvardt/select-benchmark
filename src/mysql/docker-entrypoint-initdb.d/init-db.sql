@@ -1,0 +1,8 @@
+CREATE DATABASE IF NOT EXISTS benchmark;
+
+CREATE TABLE IF NOT EXISTS `benchmark`.`benchmark` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `data` TEXT NOT NULL,
+    `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
