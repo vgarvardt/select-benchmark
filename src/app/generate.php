@@ -6,13 +6,13 @@ require 'bootstrap.php';
 // generate slightly more records than required
 $records = AbstractGenerator::RECORDS + rand(1, 999);
 
-$mysql = new MySQLGenerator();
+$mysql = new MySQLGenerator($output);
 $mysql->generate($records);
 
-$postgres = new PostgresGenerator();
+$postgres = new PostgresGenerator($output);
 $postgres->generate($records);
 
-$mongo = new MongoGenerator();
+$mongo = new MongoGenerator($output);
 $mongo->generate($records);
 
 abstract class AbstractGenerator
@@ -25,10 +25,9 @@ abstract class AbstractGenerator
     /** @var Symfony\Component\Console\Output\OutputInterface */
     protected $output;
 
-    public function __construct()
+    public function __construct(Symfony\Component\Console\Output\OutputInterface $output)
     {
-        $this->output = new Symfony\Component\Console\Output\ConsoleOutput();
-        $this->output->setVerbosity($this->output::VERBOSITY_VERY_VERBOSE);
+        $this->output = $output;
 
         $this->initConnection();
     }
@@ -96,7 +95,7 @@ abstract class AbstractGenerator
 
     protected function log(string $msg)
     {
-        $this->output->writeln(sprintf("[%s][%s]> %s", (new DateTime())->format(DateTime::ISO8601), $this->getDriver(), $msg));
+        out($this->getDriver(), $msg);
     }
 }
 
