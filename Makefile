@@ -7,3 +7,6 @@ build:
 
 generate:
 	docker-compose exec app php generate.php
+
+select:
+	docker-compose exec app php select.php

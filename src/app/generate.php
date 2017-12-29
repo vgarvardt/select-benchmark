@@ -3,47 +3,10 @@ declare(strict_types=1);
 
 require 'bootstrap.php';
 
-// generate slightly more records than required
-$records = AbstractGenerator::RECORDS + rand(1, 999);
-
-$mysql = new MySQLGenerator($output);
-$mysql->generate($records);
-
-$postgres = new PostgresGenerator($output);
-$postgres->generate($records);
-
-$mongo = new MongoGenerator($output);
-$mongo->generate($records);
-
-abstract class AbstractGenerator
+abstract class AbstractGenerator extends DBAccessor
 {
-    const RECORDS = 1000000;
-    const BATCH = 100;
-
-    /** @var PDO|MongoDB\Collection */
-    protected $connection;
-    /** @var Symfony\Component\Console\Output\OutputInterface */
-    protected $output;
-
-    public function __construct(Symfony\Component\Console\Output\OutputInterface $output)
-    {
-        $this->output = $output;
-
-        $this->initConnection();
-    }
-
-    protected function initConnection()
-    {
-        $dsn = sprintf("%s:host=%s;dbname=%s", $this->getDriver(), $this->getHost(), DB_NAME);
-        $opt = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-        ];
-
-        $this->log("Connecting to: $dsn");
-        $this->connection = new PDO($dsn, $this->getUser(), DB_PASS, $opt);
-    }
+    const RECORDS = 5000000;
+    const BATCH = 500;
 
     public function generate(int $records)
     {
@@ -55,6 +18,7 @@ abstract class AbstractGenerator
         $this->generateRecords($records, $progress);
 
         $progress->finish();
+        $this->output->writeln("");
 
         $this->log('Done generating records: ' . $records);
     }
@@ -83,83 +47,36 @@ abstract class AbstractGenerator
 
         foreach ($values as $data) {
             $stmtSingle->execute(['data' => $data]);
-            $progress->advance(count($data));
+            $progress->advance(1);
         }
-    }
-
-    abstract protected function getDriver(): string;
-
-    abstract protected function getHost(): string;
-
-    abstract protected function getUser(): string;
-
-    protected function log(string $msg)
-    {
-        out($this->getDriver(), $msg);
     }
 }
 
 class MySQLGenerator extends AbstractGenerator
 {
-    protected function getDriver(): string
-    {
-        return "mysql";
-    }
-
-    protected function getHost(): string
-    {
-        return "mysql";
-    }
-
-    protected function getUser(): string
-    {
-        return "root";
-    }
+    use MySQLDBAccessor;
 }
 
-class PostgresGenerator extends AbstractGenerator
+class PgSQLGenerator extends AbstractGenerator
 {
-    protected function getDriver(): string
-    {
-        return "pgsql";
-    }
-
-    protected function getHost(): string
-    {
-        return "postgres";
-    }
-
-    protected function getUser(): string
-    {
-        return "benchmark";
-    }
+    use PgSQLDBAccessor;
 }
 
 class MongoGenerator extends AbstractGenerator
 {
-    protected function initConnection()
-    {
-        $dsn = sprintf("%s://%s", $this->getDriver(), $this->getHost());
-
-        $this->log("Connecting to: $dsn");
-        $this->connection = (new MongoDB\Client($dsn))->{DB_NAME}->{"benchmark"};
-    }
+    use MongoDBAccessor;
 
     protected function generateRecords(int $records, Symfony\Component\Console\Helper\ProgressBar $progress)
     {
         $values = [];
         for ($i = 0, $batch = 0; $i < $records; $i++) {
-            $values[] = ['data' => uniqid()];
+            $values[$batch++] = ['data' => uniqid(), 'created_at' => new MongoDB\BSON\UTCDateTime()];
             if ($batch % $this::BATCH === 0) {
                 $this->connection->insertMany($values);
                 $progress->advance($this::BATCH);
 
                 $values = [];
                 $batch = 0;
-            }
-
-            if ($i && !($i % 10000)) {
-                $this->log('Generated records: ' . $i);
             }
         }
 
@@ -168,19 +85,16 @@ class MongoGenerator extends AbstractGenerator
             $progress->advance(count($values));
         }
     }
-
-    protected function getDriver(): string
-    {
-        return "mongodb";
-    }
-
-    protected function getHost(): string
-    {
-        return "mongodb";
-    }
-
-    protected function getUser(): string
-    {
-        return "mongodb";
-    }
 }
+
+// generate slightly more records than required
+$records = AbstractGenerator::RECORDS + rand(1, 999);
+
+$mysql = new MySQLGenerator($output);
+$mysql->generate($records);
+
+$postgres = new PgSQLGenerator($output);
+$postgres->generate($records);
+
+$mongo = new MongoGenerator($output);
+$mongo->generate($records);
