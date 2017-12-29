@@ -161,7 +161,6 @@ class MongoSelector extends AbstractSelector
 }
 
 $limit = 10000;
-$tries = 10;
 
 $selectors = [
     'mysql' => new MySQLSelector($output),
@@ -173,8 +172,8 @@ foreach ($selectors as $engine => $selector) {
     $timingsOffset = $timingsWhere = [];
 
     /** @var AbstractSelector $selector */
-    for ($i = 0; $i < $tries; $i++) {
-        out($engine, 'Running try ' . ($i + 1) . ' / ' . $tries);
+    for ($i = 0; $i < TRIES; $i++) {
+        out($engine, 'Running try ' . ($i + 1) . ' / ' . TRIES);
 
         $timingsOffset[$i] = $selector->selectOffset($limit);
         $timingsWhere[$i] = $selector->selectWhere($limit);
@@ -183,13 +182,13 @@ foreach ($selectors as $engine => $selector) {
     $avgOffset = $avgWhere = [];
     out($engine, 'Calculating AVGs');
     foreach ($timingsOffset[0] as $offset => $time) {
-        for ($i = 0; $i < $tries; $i++) {
+        for ($i = 0; $i < TRIES; $i++) {
             $avgOffset[$offset][$i] = $timingsOffset[$i][$offset];
             $avgWhere[$offset][$i] = $timingsWhere[$i][$offset];
         }
 
-        $avgOffset[$offset] = array_sum($avgOffset[$offset]) / (float)$tries;
-        $avgWhere[$offset] = array_sum($avgWhere[$offset]) / (float)$tries;
+        $avgOffset[$offset] = array_sum($avgOffset[$offset]) / (float)TRIES;
+        $avgWhere[$offset] = array_sum($avgWhere[$offset]) / (float)TRIES;
     }
 
     $nameOffset = sprintf('avg-offset.%s.csv', $engine);

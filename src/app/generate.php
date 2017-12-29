@@ -90,9 +90,25 @@ class MongoGenerator extends AbstractGenerator
 // generate slightly more records than required
 $records = AbstractGenerator::RECORDS + rand(1, 999);
 
-$mysql = new MySQLGenerator($output);
+// MySQL instance takes some time to initialise, so let's give it some time, checking availability every second
+for ($i = 0; $i < TRIES; $i++) {
+    try {
+        $mysql = new MySQLGenerator($output);
+        break;
+    } catch (Exception $e) {
+        out('connect', sprintf('Failed to connect to MySQL, try %d of %d (%s)', $i + 1, TRIES, $e->getMessage()));
+        if ($i + 1 < TRIES) {
+            sleep(1);
+        } else {
+            out('connect', 'Failed to connect to MySQL for several times, it can be not ready yet or down, please check and try again');
+            die;
+        }
+    }
+}
 $mysql->generate($records);
 
+// MySQL data generation takes a while, so Postgres should be ready for sure by that time, or not available at all,
+// so we'll just fail here.
 $postgres = new PgSQLGenerator($output);
 $postgres->generate($records);
 

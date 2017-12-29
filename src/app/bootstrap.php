@@ -5,6 +5,7 @@ require 'vendor/autoload.php';
 
 define("DB_NAME", "benchmark");
 define("DB_PASS", "benchmark");
+define("TRIES", 10);
 
 srand(time());
 
