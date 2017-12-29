@@ -175,8 +175,24 @@ foreach ($selectors as $engine => $selector) {
     for ($i = 0; $i < TRIES; $i++) {
         out($engine, 'Running try ' . ($i + 1) . ' / ' . TRIES);
 
-        $timingsOffset[$i] = $selector->selectOffset($limit);
-        $timingsWhere[$i] = $selector->selectWhere($limit);
+        $tryFileNameOffset = sprintf('try-offset-%d.%s.txt', $i, $engine);
+        $tryFileNameWhere = sprintf('try-where-%d.%s.txt', $i, $engine);
+
+        if (file_exists($tryFileNameOffset)) {
+            out($engine, 'Try OFFSET cache found, trying to load data from file: ' . $tryFileNameOffset);
+            $timingsOffset[$i] = unserialize(file_get_contents($tryFileNameOffset));
+        } else {
+            $timingsOffset[$i] = $selector->selectOffset($limit);
+            file_put_contents($tryFileNameOffset, serialize($timingsOffset[$i]));
+        }
+
+        if (file_exists($tryFileNameWhere)) {
+            out($engine, 'Try WHERE cache found, trying to load data from file: ' . $tryFileNameWhere);
+            $timingsWhere[$i] = unserialize(file_get_contents($tryFileNameWhere));
+        } else {
+            $timingsWhere[$i] = $selector->selectWhere($limit);
+            file_put_contents($tryFileNameWhere, serialize($timingsWhere[$i]));
+        }
     }
 
     $avgOffset = $avgWhere = [];

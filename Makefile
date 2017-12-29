@@ -10,3 +10,6 @@ generate:
 
 select:
 	docker-compose exec app php select.php
+
+clean:
+	rm -f src/app/try-*

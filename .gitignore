@@ -1,3 +1,4 @@
 src/app/vendor/*
 composer.lock
 *.csv
+try-*
