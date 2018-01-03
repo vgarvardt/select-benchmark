@@ -217,7 +217,7 @@ foreach ($selectors as $engine => $selector) {
 
     foreach ($avgOffset as $offset => $time) {
         fputcsv($fpOffset, [$offset, $avgOffset[$offset]]);
-        fputcsv($fpWhere, [$offset, $fpWhere[$offset]]);
+        fputcsv($fpWhere, [$offset, $avgWhere[$offset]]);
     }
 
     fclose($fpOffset);
